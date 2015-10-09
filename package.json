@@ -2,6 +2,7 @@
   "name": "exedore",
   "version": "0.0.1",
   "description": "Run-time type-checking and assertion handler",
+  "repository": "https://github.com/philgs/exedore",
   "main": "index.js",
   "author": "Phil Gates-Shannon <phil.gs@gmail.com>",
   "license": "MIT",
