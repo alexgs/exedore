@@ -1,0 +1,14 @@
+{
+  "name": "exedore",
+  "version": "0.0.1",
+  "description": "Run-time type-checking and assertion handler",
+  "main": "index.js",
+  "author": "Phil Gates-Shannon <phil.gs@gmail.com>",
+  "license": "MIT",
+  "dependencies": {
+    "harmony-reflect": "^1.4.2"
+  },
+  "devDependencies": {
+    "chai": "^2.1.0"
+  }
+}
