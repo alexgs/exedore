@@ -1,6 +1,9 @@
 
 export let Exedore = {
     around: function( functionName, advice, targetObject ) {
-        targetObject[ functionName ] = advice;
+        let oldFunction = targetObject[ functionName ];
+        targetObject[ functionName ] = function() {
+            advice( oldFunction );
+        }
     }
 };

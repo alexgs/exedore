@@ -17,6 +17,8 @@ chai.use( sinonChai );
 chai.use( dirtyChai );
 let expect = chai.expect;
 
+// TODO Add TypeScript definitions for Mocha and Chai to WebStorm's JavaScript Libraries
+
 describe( 'Exedore', function() {
 
     beforeEach( function() {
@@ -30,11 +32,34 @@ describe( 'Exedore', function() {
             };
             let spy = sinon.spy();
             Exedore.around( 'targetFn', spy, targetObject );
+
             targetObject.targetFn();
             expect( spy ).to.have.been.calledOnce();
         } );
 
-        it( 'allows the advice to wrap a call the target' );
+        it( 'allows the advice to wrap a call the target', function() {
+            let container = {
+                target: function() { }
+            };
+            let deepSpy = sinon.spy( container, 'target' );
+            let wrapper = sinon.spy( ( target ) => {
+                // This is part of the real test
+                expect( typeof target ).to.equal( 'function' );
+                target();
+            } );
+            Exedore.around( 'target', wrapper, container );
+
+            // Test assumptions before going into the real test
+            expect( wrapper === deepSpy ).to.be.false();
+            expect( typeof wrapper ).to.equal( 'function' );
+            expect( typeof container.target ).to.equal( 'function' );
+
+            // This is the real test
+            container.target();
+            expect( wrapper ).to.have.been.calledOnce();
+            expect( deepSpy ).to.have.been.calledOnce();
+        } );
+
         it( 'can chain, with the last one set up being executed around the others' );
         it( 'allows the advice to pass the normal arguments to the target' );
         it( 'makes the target\'s return value available to the advice' );
