@@ -60,7 +60,29 @@ describe( 'Exedore', function() {
             expect( deepSpy ).to.have.been.calledOnce();
         } );
 
-        it( 'can chain, with the last one set up being executed around the others' );
+        it( 'can chain, with the last one set up being executed around the others', function() {
+            let container = {
+                target: function() { }
+            };
+            let deepSpy = sinon.spy( container, 'target' );
+            let wrapper1 = sinon.spy( ( target ) => {
+                expect( typeof target ).to.equal( 'function' );
+                target();
+            } );
+            let wrapper2 = sinon.spy( ( target ) => {
+                expect( typeof target ).to.equal( 'function' );
+                target();
+            } );
+            Exedore.around( 'target', wrapper1, container );
+            Exedore.around( 'target', wrapper2, container );
+
+            container.target();
+            expect( wrapper2 ).to.have.been.calledOnce();
+            expect( wrapper1 ).to.have.been.calledOnce();
+            expect( deepSpy ).to.have.been.calledOnce();
+            expect( wrapper2 ).to.have.been.calledBefore( wrapper1 );
+        } );
+
         it( 'allows the advice to pass the normal arguments to the target' );
         it( 'makes the target\'s return value available to the advice' );
         it( 'executes the target function in the context of its object' );
