@@ -1,6 +1,5 @@
 # Exedore
 
-Exedore is (or will be) a module for run-time type-checking and assertion handling (perhaps similar to [contracts][1] in C#. It relies on [ES6 Proxies][2].
+Exedore is a JavaScript library for aspect-oriented programming (AoP). It is based on [Aop.js][1] by Fredrik Appelberg and Dave Clayton, and on the unit tests in Chapter 2 of _Reliable JavaScript: How to Code Safely in the World's Most Dangerous Language_ by Seth Richards and Lawrence Spencer (ISBN 9781119028727).
 
-[1]: https://msdn.microsoft.com/en-us/library/dd264808(v=vs.110).aspx
-[2]: https://hacks.mozilla.org/2015/07/es6-in-depth-proxies-and-reflect/
+[1]: https://github.com/davedx/aop
