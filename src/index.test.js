@@ -22,9 +22,18 @@ describe( 'Exedore', function() {
     beforeEach( function() {
     } );
 
-    describe( 'has a function `around(fnName, advice, targetObj)` that', function() {
+    describe( 'has a function `around( functionName, advice, targetObject )` that', function() {
 
-        it( 'causes a call to the target function to execute the advice' );
+        it( 'causes a call to the target function to execute the advice', function() {
+            let targetObject = {
+                targetFn: function() { }
+            };
+            let spy = sinon.spy();
+            Exedore.around( 'targetFn', spy, targetObject );
+            targetObject.targetFn();
+            expect( spy ).to.have.been.calledOnce();
+        } );
+
         it( 'allows the advice to wrap a call the target' );
         it( 'can chain, with the last one set up being executed around the others' );
         it( 'allows the advice to pass the normal arguments to the target' );
@@ -34,8 +43,8 @@ describe( 'Exedore', function() {
 
     } );
 
-    describe( 'has a function `next(context,targetInfo)` that', function() {
-        
+    describe( 'has a function `next( context, targetInfo )` that', function() {
+
         it( 'calls the function in targetInfo.fn' );
         it( 'passes the arguments in targetInfo.args' );
         it( 'returns the value from targetInfo\'s function' );
@@ -43,10 +52,11 @@ describe( 'Exedore', function() {
 
     } );
 
-    describe( 'has a function `before(fnName, advice, targetObj)` that', function() {
+    describe( 'has a function `before( functionName, advice, targetObject )` that', function() {
 
         describe( 'when advice succeeds', function() {
-            it( 'causes a call to the target function to execute the advice followed by the target' );
+            it( 'causes a call to the target function to execute the advice '
+                + 'followed by the target' );
             it( 'provides the arguments to the advice' );
             it( 'provides the arguments to the target function' );
             it( 'can chain, with the last one set up executing first' );
@@ -61,7 +71,7 @@ describe( 'Exedore', function() {
 
     } );
 
-    describe( 'has a function `after(fnName, advice, targetObj)` that', function() {
+    describe( 'has a function `after( functionName, advice, targetObject )` that', function() {
 
         describe( 'when target has succeeded', function() {
             it( 'executes after the target' );
