@@ -17,36 +17,41 @@ chai.use( sinonChai );
 chai.use( dirtyChai );
 let expect = chai.expect;
 
-// TODO Add TypeScript definitions for Mocha and Chai to WebStorm's JavaScript Libraries
-
 describe( 'Exedore', function() {
+    let container
+        , deepSpy
+        , wrapperFactory
+        ;
 
     beforeEach( function() {
+        container = {
+            target: function() { }
+        };
+        deepSpy = sinon.spy( container, 'target' );
+        wrapperFactory = {
+            create: function () {
+                return ( ( target, args = [ ] ) => {
+                    // Test that the arguments are the correct types
+                    expect( typeof target ).to.equal( 'function' );
+                    expect( Array.isArray( args ) ).to.be.true();
+                    target.apply( this, args );
+                } );
+            }
+        };
     } );
 
     describe( 'has a function `around( functionName, advice, targetObject )` that', function() {
 
         it( 'causes a call to the target function to execute the advice', function() {
-            let targetObject = {
-                targetFn: function() { }
-            };
-            let spy = sinon.spy();
-            Exedore.around( 'targetFn', spy, targetObject );
+            let wrapper = sinon.spy();
+            Exedore.around( 'target', wrapper, container );
 
-            targetObject.targetFn();
-            expect( spy ).to.have.been.calledOnce();
+            container.target();
+            expect( wrapper ).to.have.been.calledOnce();
         } );
 
         it( 'allows the advice to wrap a call the target', function() {
-            let container = {
-                target: function() { }
-            };
-            let deepSpy = sinon.spy( container, 'target' );
-            let wrapper = sinon.spy( ( target ) => {
-                // This is part of the real test
-                expect( typeof target ).to.equal( 'function' );
-                target();
-            } );
+            let wrapper = sinon.spy( wrapperFactory.create() );
             Exedore.around( 'target', wrapper, container );
 
             // Test assumptions before going into the real test
@@ -55,26 +60,17 @@ describe( 'Exedore', function() {
             expect( typeof container.target ).to.equal( 'function' );
 
             // This is the real test
-            container.target();
+            container.target( 'what' );
             expect( wrapper ).to.have.been.calledOnce();
             expect( deepSpy ).to.have.been.calledOnce();
         } );
 
         it( 'can chain, with the last one set up being executed around the others', function() {
-            let container = {
-                target: function() { }
-            };
-            let deepSpy = sinon.spy( container, 'target' );
-            let wrapper1 = sinon.spy( ( target ) => {
-                expect( typeof target ).to.equal( 'function' );
-                target();
-            } );
-            let wrapper2 = sinon.spy( ( target ) => {
-                expect( typeof target ).to.equal( 'function' );
-                target();
-            } );
+            let wrapper1 = sinon.spy( wrapperFactory.create() );
+            let wrapper2 = sinon.spy( wrapperFactory.create() );
             Exedore.around( 'target', wrapper1, container );
             Exedore.around( 'target', wrapper2, container );
+            expect( wrapper1 === wrapper2 ).to.be.false();
 
             container.target();
             expect( wrapper2 ).to.have.been.calledOnce();
@@ -83,7 +79,34 @@ describe( 'Exedore', function() {
             expect( wrapper2 ).to.have.been.calledBefore( wrapper1 );
         } );
 
-        it( 'allows the advice to pass the normal arguments to the target' );
+        it( 'allows the advice to pass the normal arguments to the target', function() {
+            let wrapper = sinon.spy( wrapperFactory.create() );
+            Exedore.around( 'target', wrapper, container );
+
+            let arg0 = 'happy';
+            let arg1 = 42;
+            container.target( arg0, arg1 );
+            expect( deepSpy ).to.have.been.calledOnce();
+            expect( deepSpy ).to.have.been.calledWithExactly( arg0, arg1 );
+        } );
+
+        it( 'can chain and pass arguments down the chain', function() {
+            let wrapper1 = sinon.spy( wrapperFactory.create() );
+            let wrapper2 = sinon.spy( wrapperFactory.create() );
+            Exedore.around( 'target', wrapper1, container );
+            Exedore.around( 'target', wrapper2, container );
+            expect( wrapper1 === wrapper2 ).to.be.false();
+
+            let arg0 = 'happy';
+            let arg1 = 42;
+            container.target( arg0, arg1 );
+            expect( wrapper2 ).to.have.been.calledOnce();
+            expect( wrapper1 ).to.have.been.calledOnce();
+            expect( wrapper2 ).to.have.been.calledBefore( wrapper1 );
+            expect( deepSpy ).to.have.been.calledOnce();
+            expect( deepSpy ).to.have.been.calledWithExactly( arg0, arg1 );
+        } );
+
         it( 'makes the target\'s return value available to the advice' );
         it( 'executes the target function in the context of its object' );
         it( 'executes the advice in the context of the target' );
