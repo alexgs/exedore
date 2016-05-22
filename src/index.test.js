@@ -136,8 +136,63 @@ describe( 'Exedore', function() {
             expect( deepSpy ).to.have.been.calledOnce();
         } );
 
-        it( 'executes the target function in the context of its object' );
-        it( 'executes the advice in the context of the target' );
+        it( 'executes the target function in the context of its object', function() {
+            let _self = null;
+            class TargetClass {
+                constructor() {
+                    _self = this;
+                }
+
+                targetFunction() {
+                    expect( _self instanceof TargetClass ).to.be.true();
+                    expect( this instanceof TargetClass ).to.be.true();
+                    expect( this ).to.equal( _self );
+                }
+            }
+            // Use old school function declaration, so that `this` is not
+            // lexically bound to the context of this testing function
+            let wrapper = sinon.spy( function ( target, args = [ ] ) {
+                // Test that the arguments are the correct types
+                expect( typeof target ).to.equal( 'function' );
+                expect( Array.isArray( args ) ).to.be.true();
+                expect( this instanceof TargetClass ).to.be.true();
+                target.apply( this, args );
+            } );
+
+            let instance = new TargetClass();
+            deepSpy = sinon.spy( instance, 'targetFunction' );
+            Exedore.around( 'targetFunction', wrapper, instance );
+
+            instance.targetFunction();
+            expect( wrapper ).to.have.been.calledOnce();
+            expect( deepSpy ).to.have.been.calledOnce();
+        } );
+
+        it.skip( 'executes the advice in the context of the target\'s object', function() {
+            container.target = function() {
+                // expect( this ).to.equal( container );
+                // console.log( this.toString() );
+                // console.log( container.toString() );
+                console.log( Object.keys( this ) );
+                console.log( Object.keys( container ) );
+                // console.log( Object.getPrototypeOf( this ) );
+                // console.log( Object.getPrototypeOf( container ) );
+                expect( this === container ).to.be.true();
+            };
+            // let wrapper = sinon.spy( wrapperFactory.create() );
+            let wrapper = ( target, args = [ ] ) => {
+                // Test that the arguments are the correct types
+                expect( typeof target ).to.equal( 'function' );
+                expect( Array.isArray( args ) ).to.be.true();
+                target.apply( this, args );
+            };
+            deepSpy = sinon.spy( container, 'target' );
+            Exedore.around( 'target', wrapper, container );
+
+            container.target();
+            // expect( wrapper ).to.have.been.calledOnce();
+            expect( deepSpy ).to.have.been.calledOnce();
+        } );
 
     } );
 
@@ -147,6 +202,12 @@ describe( 'Exedore', function() {
         it( 'passes the arguments in targetInfo.args' );
         it( 'returns the value from targetInfo\'s function' );
         it( 'calls the target function in the given context' );
+
+    } );
+
+    describe( 'has a function `wrap( targetObject, functionName, advice )` that', function() {
+
+        it( 'is an alias for the `around` function' );
 
     } );
 

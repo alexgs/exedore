@@ -22,3 +22,15 @@ Exedore is a JavaScript library for aspect-oriented programming (AoP). It is bas
 - Implement `before` and `after` methods, as in [Aop.js][1]
 - Update `before` method to accept a function argument that modifies the arguments to the original function
 - Update `after` method to accept a function argument that modifies the return value from the original function
+
+## Usage
+
+When defining an "advice" or "wrapper" function, do **NOT** user [arrow functions][2] (aka "fat arrows"). Use the old school function declaration:
+
+```javascript
+let advice = function( target, args ) { /* do stuff */ }
+```
+
+This is because arrow functions lexically bind the value of `this` to the contact where they are defined, which is the opposite of what we want in aspect-oriented programming.
+
+[2]: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Functions/Arrow_functions
