@@ -107,7 +107,35 @@ describe( 'Exedore', function() {
             expect( deepSpy ).to.have.been.calledWithExactly( arg0, arg1 );
         } );
 
-        it( 'makes the target\'s return value available to the advice' );
+        it( 'makes the target\'s return value available to the advice', function() {
+            // Secret is an integer between 0 and 999,999
+            let secret = Math.floor( Math.random() * 1000000 );
+            let returnValue = {
+                type: 'secret',
+                data: {
+                    name: 'setec astronomy',
+                    number: secret
+                }
+            };
+            container.target = function() {
+                return returnValue
+            };
+            deepSpy = sinon.spy( container, 'target' );
+
+            let wrapper = sinon.spy( ( target, args = [ ] ) => {
+                // Test that the arguments are the correct types
+                expect( typeof target ).to.equal( 'function' );
+                expect( Array.isArray( args ) ).to.be.true();
+                let result = target.apply( this, args );
+                expect( result ).to.deep.equal( returnValue );
+            } );
+            Exedore.around( 'target', wrapper, container );
+
+            container.target();
+            expect( wrapper ).to.have.been.calledOnce();
+            expect( deepSpy ).to.have.been.calledOnce();
+        } );
+
         it( 'executes the target function in the context of its object' );
         it( 'executes the advice in the context of the target' );
 
