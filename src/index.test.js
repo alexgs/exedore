@@ -181,6 +181,7 @@ describe( 'Exedore', function() {
 
             let wrapper = sinon.spy( function( target, args = [ ] ) {
                 expect( this instanceof TargetClass ).to.be.true();
+                expect( this === _self ).to.be.true();
                 expect( this ).to.equal( _self );
 
                 target.apply( this, args );
@@ -225,7 +226,29 @@ describe( 'Exedore', function() {
             expect( result ).to.equal( targetFunction( secret ) );
         } );
 
-        it( 'calls the passed-in function in the given context' );
+        it( 'calls the passed-in function in the given context', function() {
+            let _context = null;
+            class TargetClass {
+                constructor() {
+                    _context = this;
+                }
+
+                classFunction( num ) {
+                    expect( this instanceof TargetClass ).to.be.true();
+                    expect( this === _context ).to.be.true();
+                    expect( this ).to.equal( _context );
+                    return num * 2;
+                }
+            }
+
+            let instance = new TargetClass();
+            let instanceSpy = sinon.spy( instance, 'classFunction' );
+            let result = Exedore.next( instance, instance.classFunction, [ secret ] );
+            expect( instanceSpy ).to.be.calledOnce();
+            expect( instanceSpy ).to.be.calledWithExactly( secret );
+            expect( result ).to.equal( instance.classFunction( secret ) );
+
+        } );
 
     } );
 
