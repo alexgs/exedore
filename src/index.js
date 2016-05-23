@@ -1,5 +1,5 @@
 
-export let Exedore = {
+let Exedore = {
     around: function( functionName, advice, targetObject ) {
         let oldFunction = targetObject[ functionName ];
         targetObject[ functionName ] = function() {
@@ -16,3 +16,5 @@ export let Exedore = {
         this.around( functionName, advice, targetObject );
     }
 };
+
+export default Exedore;
