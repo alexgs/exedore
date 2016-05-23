@@ -198,14 +198,26 @@ describe( 'Exedore', function() {
     } );
 
     describe( 'has a function `next( context, function, args )` that', function() {
+        let targetFunction
+            , secret
+            ;
 
-        it( 'calls the passed-in function', function() {
-            let target = sinon.spy( function() { return 1; } );
-            Exedore.next( this, target );
-            expect( target ).to.be.calledOnce();
+        beforeEach( function() {
+            targetFunction = sinon.spy( function( num ) { return num * 2 } );
+            secret = Math.floor( Math.random() * 1000000 );
         } );
 
-        it( 'passes the arguments in `args` to the passed-in function' );
+        it( 'calls the passed-in function', function() {
+            Exedore.next( this, targetFunction );
+            expect( targetFunction ).to.be.calledOnce();
+        } );
+
+        it( 'passes the arguments in `args` to the passed-in function', function () {
+            Exedore.next( this, targetFunction, [ secret ] );
+            expect( targetFunction ).to.be.calledOnce();
+            expect( targetFunction ).to.be.calledWithExactly( secret );
+        } );
+
         it( 'returns the value from the passed-in function' );
         it( 'calls the passed-in function in the given context' );
 
