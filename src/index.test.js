@@ -181,6 +181,7 @@ describe( 'Exedore', function() {
 
             let wrapper = sinon.spy( function( target, args = [ ] ) {
                 expect( this instanceof TargetClass ).to.be.true();
+                expect( this === _self ).to.be.true();
                 expect( this ).to.equal( _self );
 
                 target.apply( this, args );
@@ -197,52 +198,76 @@ describe( 'Exedore', function() {
 
     } );
 
-    describe( 'has a function `next( context, targetInfo )` that', function() {
+    describe( 'has a function `next( context, function, args )` that', function() {
+        let targetFunction
+            , secret
+            ;
 
-        it( 'calls the function in targetInfo.fn' );
-        it( 'passes the arguments in targetInfo.args' );
-        it( 'returns the value from targetInfo\'s function' );
-        it( 'calls the target function in the given context' );
+        beforeEach( function() {
+            targetFunction = sinon.spy( function( num ) { return num * 2 } );
+            secret = Math.floor( Math.random() * 1000000 );
+        } );
+
+        it( 'calls the passed-in function', function() {
+            Exedore.next( this, targetFunction );
+            expect( targetFunction ).to.be.calledOnce();
+        } );
+
+        it( 'passes the arguments in `args` to the passed-in function', function () {
+            Exedore.next( this, targetFunction, [ secret ] );
+            expect( targetFunction ).to.be.calledOnce();
+            expect( targetFunction ).to.be.calledWithExactly( secret );
+        } );
+
+        it( 'returns the value from the passed-in function', function() {
+            let result = Exedore.next( this, targetFunction, [ secret ] );
+            expect( targetFunction ).to.be.calledOnce();
+            expect( targetFunction ).to.be.calledWithExactly( secret );
+            expect( result ).to.equal( targetFunction( secret ) );
+        } );
+
+        it( 'calls the passed-in function in the given context', function() {
+            let _context = null;
+            class TargetClass {
+                constructor() {
+                    _context = this;
+                }
+
+                classFunction( num ) {
+                    expect( this instanceof TargetClass ).to.be.true();
+                    expect( this === _context ).to.be.true();
+                    expect( this ).to.equal( _context );
+                    return num * 2;
+                }
+            }
+
+            let instance = new TargetClass();
+            let instanceSpy = sinon.spy( instance, 'classFunction' );
+            let result = Exedore.next( instance, instance.classFunction, [ secret ] );
+            expect( instanceSpy ).to.be.calledOnce();
+            expect( instanceSpy ).to.be.calledWithExactly( secret );
+            expect( result ).to.equal( instance.classFunction( secret ) );
+
+        } );
 
     } );
 
     describe( 'has a function `wrap( targetObject, functionName, advice )` that', function() {
 
-        it( 'is an alias for the `around` function' );
+        it( 'is an alias for the `around` function', function () {
+            let aroundSpy = sinon.spy( Exedore, 'around' );
+            let wrapper = sinon.spy( wrapperFactory.create() );
+            Exedore.wrap( container, 'target', wrapper );
 
-    } );
+            let arg0 = 'happy';
+            let arg1 = 42;
+            container.target( arg0, arg1 );
 
-    describe.skip( 'has a function `before( functionName, advice, targetObject )` that', function() {
-
-        describe( 'when advice succeeds', function() {
-            it( 'causes a call to the target function to execute the advice '
-                + 'followed by the target' );
-            it( 'provides the arguments to the advice' );
-            it( 'provides the arguments to the target function' );
-            it( 'can chain, with the last one set up executing first' );
-            it( 'causes a call to the target to return its normal value' );
-            it( 'executes the advice in the context of the target' );
-        } );
-
-        describe( 'when advice throws', function() {
-            it( 'does not execute the next advice' );
-            it( 'does not execute the target' );
-        } );
-
-    } );
-
-    describe.skip( 'has a function `after( functionName, advice, targetObject )` that', function() {
-
-        describe( 'when target has succeeded', function() {
-            it( 'executes after the target' );
-            it( 'executes with the target\'s arguments' );
-            it( 'executes in the context of the target' );
-            it( 'returns the return value of the target' );
-            it( 'can chain, with the first one set up executing first' );
-        } );
-
-        describe( 'when target has thrown an exception', function() {
-            it( 'does not execute' );
+            expect( wrapper ).to.have.been.calledOnce();
+            expect( deepSpy ).to.have.been.calledOnce();
+            expect( deepSpy ).to.have.been.calledWithExactly( arg0, arg1 );
+            expect( aroundSpy ).to.have.been.calledOnce();
+            expect( aroundSpy ).to.have.been.calledWithExactly( 'target', wrapper, container );
         } );
 
     } );
