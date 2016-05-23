@@ -4,8 +4,7 @@ export let Exedore = {
         let oldFunction = targetObject[ functionName ];
         targetObject[ functionName ] = function() {
             let args = Array.from( arguments );
-            advice.apply( targetObject, [ oldFunction, args ] );
-            // advice.apply( this, [ oldFunction, args ] );
+            return advice.apply( targetObject, [ oldFunction, args ] );
         }
     },
 

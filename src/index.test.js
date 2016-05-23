@@ -196,6 +196,24 @@ describe( 'Exedore', function() {
             expect( deepSpy ).to.have.been.calledOnce();
         } );
 
+        it( 'allows the advice to return a value', function() {
+            container.plus = function( a, b ) { return a + b };
+            let plusSpy = sinon.spy( container, 'plus' );
+            
+            expect( container.plus( 2, 2 ) ).to.equal( 4 );
+            expect( plusSpy ).to.have.been.calledOnce();
+
+            let adviceSpy = sinon.spy( function( fn, args ) {
+                return Exedore.next( container, fn, args ) + 1 ;
+            } );
+
+            Exedore.around( 'plus', adviceSpy, container );
+            let result = container.plus( 2, 2 );
+            expect( adviceSpy ).to.have.been.calledOnce();
+            expect( plusSpy ).to.have.been.calledTwice();
+            expect( result ).to.equal( 5 );
+        } );
+
     } );
 
     describe( 'has a function `next( context, function, args )` that', function() {
