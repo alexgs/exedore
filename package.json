@@ -1,6 +1,6 @@
 {
   "name": "exedore",
-  "version": "0.0.2",
+  "version": "1.0.0-pre0",
   "description": "Library for aspect-oriented programming",
   "repository": {
     "type": "git",
