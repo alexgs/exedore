@@ -197,12 +197,17 @@ describe( 'Exedore', function() {
 
     } );
 
-    describe( 'has a function `next( context, targetInfo )` that', function() {
+    describe( 'has a function `next( context, function, args )` that', function() {
 
-        it( 'calls the function in targetInfo.fn' );
-        it( 'passes the arguments in targetInfo.args' );
-        it( 'returns the value from targetInfo\'s function' );
-        it( 'calls the target function in the given context' );
+        it( 'calls the passed-in function', function() {
+            let target = sinon.spy( function() { return 1; } );
+            Exedore.next( this, target );
+            expect( target ).to.be.calledOnce();
+        } );
+
+        it( 'passes the arguments in `args` to the passed-in function' );
+        it( 'returns the value from the passed-in function' );
+        it( 'calls the passed-in function in the given context' );
 
     } );
 

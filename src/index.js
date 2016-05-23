@@ -7,5 +7,9 @@ export let Exedore = {
             advice.apply( targetObject, [ oldFunction, args ] );
             // advice.apply( this, [ oldFunction, args ] );
         }
+    },
+
+    next: function( contextObject, functionRef, args = [ ] ) {
+        functionRef.apply( {}, args );
     }
 };
