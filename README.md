@@ -18,6 +18,7 @@ This is because arrow functions lexically bind the value of `this` to the contac
 
 ## To Do
 
+- Automate building for release with Webpack
 - Explain more about arrow functions and lexical binding
 - Add decent documentation with examples (in an `examples.js` file), including 
     - usage with ES6 classes and their prototypes
