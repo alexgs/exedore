@@ -11,5 +11,9 @@ export let Exedore = {
 
     next: function( contextObject, functionRef, args = [ ] ) {
         return functionRef.apply( contextObject, args );
+    },
+
+    wrap: function( targetObject, functionName, advice ) {
+        this.around( functionName, advice, targetObject );
     }
 };

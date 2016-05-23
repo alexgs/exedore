@@ -254,7 +254,21 @@ describe( 'Exedore', function() {
 
     describe( 'has a function `wrap( targetObject, functionName, advice )` that', function() {
 
-        it( 'is an alias for the `around` function' );
+        it( 'is an alias for the `around` function', function () {
+            let aroundSpy = sinon.spy( Exedore, 'around' );
+            let wrapper = sinon.spy( wrapperFactory.create() );
+            Exedore.wrap( container, 'target', wrapper );
+
+            let arg0 = 'happy';
+            let arg1 = 42;
+            container.target( arg0, arg1 );
+
+            expect( wrapper ).to.have.been.calledOnce();
+            expect( deepSpy ).to.have.been.calledOnce();
+            expect( deepSpy ).to.have.been.calledWithExactly( arg0, arg1 );
+            expect( aroundSpy ).to.have.been.calledOnce();
+            expect( aroundSpy ).to.have.been.calledWithExactly( 'target', wrapper, container );
+        } );
 
     } );
 
