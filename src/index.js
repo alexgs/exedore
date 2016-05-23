@@ -1,11 +1,10 @@
 
-export let Exedore = {
+let Exedore = {
     around: function( functionName, advice, targetObject ) {
         let oldFunction = targetObject[ functionName ];
         targetObject[ functionName ] = function() {
             let args = Array.from( arguments );
-            advice.apply( targetObject, [ oldFunction, args ] );
-            // advice.apply( this, [ oldFunction, args ] );
+            return advice.apply( targetObject, [ oldFunction, args ] );
         }
     },
 
@@ -17,3 +16,5 @@ export let Exedore = {
         this.around( functionName, advice, targetObject );
     }
 };
+
+export default Exedore;

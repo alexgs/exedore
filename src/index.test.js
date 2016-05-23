@@ -11,7 +11,8 @@ import dirtyChai from 'dirty-chai';
 import sinon from 'sinon';
 import sinonChai from 'sinon-chai';
 
-import { Exedore } from './index';
+import Exedore from './index';
+import TestClass from './module';
 
 chai.use( sinonChai );
 chai.use( dirtyChai );
@@ -194,6 +195,30 @@ describe( 'Exedore', function() {
             instance.targetFunction();
             expect( wrapper ).to.have.been.calledOnce();
             expect( deepSpy ).to.have.been.calledOnce();
+        } );
+
+        it( 'allows the advice to return a value', function() {
+            container.plus = function( a, b ) { return a + b };
+            let plusSpy = sinon.spy( container, 'plus' );
+
+            expect( container.plus( 2, 2 ) ).to.equal( 4 );
+            expect( plusSpy ).to.have.been.calledOnce();
+
+            let adviceSpy = sinon.spy( function( fn, args ) {
+                return Exedore.next( container, fn, args ) + 1 ;
+            } );
+
+            Exedore.around( 'plus', adviceSpy, container );
+            let result = container.plus( 2, 2 );
+            expect( adviceSpy ).to.have.been.calledOnce();
+            expect( plusSpy ).to.have.been.calledTwice();
+            expect( result ).to.equal( 5 );
+        } );
+
+        it( 'can *NOT* wrap a private function in a module', function() {
+            // This does not work; see line 24 in `module.js`
+            let test = new TestClass( 2, 2 );
+            expect( test.add() ).to.equal( 4 );
         } );
 
     } );
