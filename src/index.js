@@ -10,6 +10,6 @@ export let Exedore = {
     },
 
     next: function( contextObject, functionRef, args = [ ] ) {
-        functionRef.apply( {}, args );
+        return functionRef.apply( {}, args );
     }
 };

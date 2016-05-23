@@ -218,7 +218,13 @@ describe( 'Exedore', function() {
             expect( targetFunction ).to.be.calledWithExactly( secret );
         } );
 
-        it( 'returns the value from the passed-in function' );
+        it( 'returns the value from the passed-in function', function() {
+            let result = Exedore.next( this, targetFunction, [ secret ] );
+            expect( targetFunction ).to.be.calledOnce();
+            expect( targetFunction ).to.be.calledWithExactly( secret );
+            expect( result ).to.equal( targetFunction( secret ) );
+        } );
+
         it( 'calls the passed-in function in the given context' );
 
     } );
