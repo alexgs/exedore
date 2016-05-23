@@ -212,39 +212,4 @@ describe( 'Exedore', function() {
 
     } );
 
-    describe.skip( 'has a function `before( functionName, advice, targetObject )` that', function() {
-
-        describe( 'when advice succeeds', function() {
-            it( 'causes a call to the target function to execute the advice '
-                + 'followed by the target' );
-            it( 'provides the arguments to the advice' );
-            it( 'provides the arguments to the target function' );
-            it( 'can chain, with the last one set up executing first' );
-            it( 'causes a call to the target to return its normal value' );
-            it( 'executes the advice in the context of the target' );
-        } );
-
-        describe( 'when advice throws', function() {
-            it( 'does not execute the next advice' );
-            it( 'does not execute the target' );
-        } );
-
-    } );
-
-    describe.skip( 'has a function `after( functionName, advice, targetObject )` that', function() {
-
-        describe( 'when target has succeeded', function() {
-            it( 'executes after the target' );
-            it( 'executes with the target\'s arguments' );
-            it( 'executes in the context of the target' );
-            it( 'returns the return value of the target' );
-            it( 'can chain, with the first one set up executing first' );
-        } );
-
-        describe( 'when target has thrown an exception', function() {
-            it( 'does not execute' );
-        } );
-
-    } );
-
 } );
