@@ -8,6 +8,13 @@ let Exedore = {
         }
     },
 
+    before: function( targetObject, functionName, advice ) {
+        this.wrap( targetObject, functionName, function( originalFunction, args ) {
+            advice.apply( {}, [ originalFunction, args ] );
+            return Exedore.next( {}, originalFunction, args );
+        } );
+    },
+
     next: function( contextObject, functionRef, args = [ ] ) {
         return functionRef.apply( contextObject, args );
     },

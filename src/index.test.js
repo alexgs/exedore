@@ -297,4 +297,115 @@ describe( 'Exedore', function() {
 
     } );
 
+    describe( 'usage examples:', function() {
+
+        context( 'logging', function() {
+            let log = [ ];
+            let t1 = {
+                add( a, b ) { return a + b; },
+                multiply( a, b ) { return a * b; }
+            };
+
+            let logger = function( target, args ) {
+                let message = `Function ${target.name} called with ${args.toString()}`;
+                // console.log( message );
+                log.push( message );
+                return Exedore.next( this, target, args );
+            };
+
+            it( 'with `wrap`', function() {
+                Exedore.wrap( t1, 'add', logger );
+
+                expect( t1.add( 1, 1 ) ).to.equal( 2 );
+                expect( t1.add( 2, 2 ) ).to.equal( 4 );
+                expect( log.length ).to.equal( 2 );
+                expect( log[0] ).to.equal( 'Function add called with 1,1' );
+                expect( log[1] ).to.equal( 'Function add called with 2,2' );
+
+            } );
+
+        } );
+
+    } );
+
+    describe( 'has a function `before( targetObject, functionName, advice )` that', function() {
+
+        beforeEach( function() {
+            wrapperFactory = {
+                create: function () {
+                    return ( ( target, args = [ ] ) => {
+                        // Test that the arguments are the correct types
+                        expect( typeof target ).to.equal( 'function' );
+                        expect( Array.isArray( args ) ).to.be.true();
+
+                        // `Exedore.next` is called inside of `Exedore.before`
+                        // so we do **NOT** need to worry about it here.
+                    } );
+                }
+            };
+        } );
+
+        context( '(when the advice has completed normally)', function() {
+            let wrapper, arg0, arg1;
+
+            beforeEach( function () {
+                wrapper = sinon.spy( wrapperFactory.create() );
+                arg0 = 'happy';
+                arg1 = 42;
+
+                Exedore.before( container, 'target', wrapper );
+                container.target( arg0, arg1 );
+            } );
+
+            it( 'causes a call to the target function to execute the advice before '
+                + 'executing the target', function () {
+                expect( wrapper ).to.have.been.calledBefore( deepSpy );
+            } );
+
+            it( 'provides the arguments to the advice', function() {
+                expect( wrapper ).to.have.been.calledOnce();
+                expect( wrapper ).to.have.been.calledWithExactly( sinon.match.func, [ arg0, arg1 ] );
+            } );
+
+            it( 'provides the arguments to the target function', function() {
+                expect( deepSpy ).to.have.been.calledOnce();
+                expect( deepSpy ).to.have.been.calledWithExactly( arg0, arg1 );
+            } );
+
+            it( 'can chain, with the most-recently added advice executing first' );
+            it( 'causes a call to the target to return its normal value' );
+            it( 'executes the advice in the context of the target' );
+
+        } );
+
+        context( '(when the advice has thrown an error)', function() {
+
+            it( 'does not execute the next advice' );
+            it( 'does not execute the target' );
+
+        } );
+
+    } );
+
+    describe( 'has a function `after( targetObject, functionName, advice )` that', function() {
+
+        context( '(when the target has completed normally)', function() {
+
+            it( 'executes after the target' );
+            it( 'executes with the target\'s arguments' );
+            it( 'executes in the context of the target' );
+            it( 'returns the return value of the target' );
+            it( 'can chain, with the most-recently added advice executing first' );
+
+        } );
+
+        context( '(when the target has thrown an error)', function() {
+
+            it( 'does not execute' );
+
+        } );
+
+
+    } );
+
 } );
