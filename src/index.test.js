@@ -330,25 +330,23 @@ describe( 'Exedore', function() {
 
     describe( 'has a function `before( targetObject, functionName, advice )` that', function() {
 
-        beforeEach( function() {
-            wrapperFactory = {
-                create: function () {
-                    return ( ( target, args = [ ] ) => {
-                        // Test that the arguments are the correct types
-                        expect( typeof target ).to.equal( 'function' );
-                        expect( Array.isArray( args ) ).to.be.true();
-
-                        // `Exedore.next` is called inside of `Exedore.before`
-                        // so we do **NOT** need to worry about it here.
-                    } );
-                }
-            };
-        } );
-
         context( '(when the advice has completed normally)', function() {
             let wrapper, arg0, arg1;
 
-            beforeEach( function () {
+            beforeEach( function() {
+                wrapperFactory = {
+                    create: function () {
+                        return ( ( target, args = [ ] ) => {
+                            // Test that the arguments are the correct types
+                            expect( typeof target ).to.equal( 'function' );
+                            expect( Array.isArray( args ) ).to.be.true();
+
+                            // `Exedore.next` is called inside of `Exedore.before`
+                            // so we do **NOT** need to worry about it here.
+                        } );
+                    }
+                };
+
                 wrapper = sinon.spy( wrapperFactory.create() );
                 arg0 = 'happy';
                 arg1 = 42;
@@ -451,9 +449,57 @@ describe( 'Exedore', function() {
         } );
 
         context( '(when the advice has thrown an error)', function() {
+            let errorFactory, errorWrap, wrapper;
 
-            it( 'does not execute the next advice' );
-            it( 'does not execute the target' );
+            beforeEach( function() {
+                wrapperFactory = {
+                    create: function () {
+                        return ( ( target, args = [ ] ) => {
+                            // Test that the arguments are the correct types
+                            expect( typeof target ).to.equal( 'function' );
+                            expect( Array.isArray( args ) ).to.be.true();
+
+                            // `Exedore.next` is called inside of `Exedore.before`
+                            // so we do **NOT** need to worry about it here.
+                        } );
+                    }
+                };
+                wrapper = sinon.spy( wrapperFactory.create() );
+
+                errorFactory = {
+                    create: function () {
+                        return ( ( target, args = [ ] ) => {
+                            // Test that the arguments are the correct types
+                            expect( typeof target ).to.equal( 'function' );
+                            expect( Array.isArray( args ) ).to.be.true();
+
+                            throw new Error( 'Oops!' );
+                        } );
+                    }
+                };
+                errorWrap = sinon.spy( errorFactory.create() );
+
+                Exedore.before( container, 'target', wrapper );
+                Exedore.before( container, 'target', errorWrap );
+            } );
+
+            it( 'does not execute the next advice', function() {
+                expect( function() {
+                    container.target();
+                } ).to.throw( Error, 'Oops!' );
+
+                expect( errorWrap ).to.have.been.calledOnce();
+                expect( wrapper ).to.have.callCount( 0 );
+            } );
+
+            it( 'does not execute the target', function() {
+                expect( function() {
+                    container.target();
+                } ).to.throw( Error, 'Oops!' );
+
+                expect( errorWrap ).to.have.been.calledOnce();
+                expect( deepSpy ).to.have.callCount( 0 );
+            } );
 
         } );
 
