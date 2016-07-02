@@ -2,11 +2,21 @@ var path = require( 'path' );
 var sourceDir = path.resolve( __dirname, '..', 'src' );
 
 module.exports = {
-    mochaTests: {
-        files: [ sourceDir + '**/*.js' ],
+
+    examples: {
+        files: [ sourceDir + '**/*examples.js' ],
         options: {
             spawn: false
         },
-        tasks: [ 'build-and-test' ]
+        tasks: [ 'dev-examples' ]
+    },
+
+    tests: {
+        files: [ sourceDir + '**/*.test.js' ],
+        options: {
+            spawn: false
+        },
+        tasks: [ 'dev' ]
     }
+
 };
