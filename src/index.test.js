@@ -297,4 +297,334 @@ describe( 'Exedore', function() {
 
     } );
 
+    describe( 'usage examples:', function() {
+
+        context( 'logging', function() {
+            let log = [ ];
+            let t1 = {
+                add( a, b ) { return a + b; },
+                multiply( a, b ) { return a * b; }
+            };
+
+            let logger = function( target, args ) {
+                let message = `Function ${target.name} called with ${args.toString()}`;
+                // console.log( message );
+                log.push( message );
+                return Exedore.next( this, target, args );
+            };
+
+            it( 'with `wrap`', function() {
+                Exedore.wrap( t1, 'add', logger );
+
+                expect( t1.add( 1, 1 ) ).to.equal( 2 );
+                expect( t1.add( 2, 2 ) ).to.equal( 4 );
+                expect( log.length ).to.equal( 2 );
+                expect( log[0] ).to.equal( 'Function add called with 1,1' );
+                expect( log[1] ).to.equal( 'Function add called with 2,2' );
+
+            } );
+
+        } );
+
+    } );
+
+    describe( 'has a function `before( targetObject, functionName, advice )` that', function() {
+
+        context( '(when the advice has completed normally)', function() {
+            let wrapper, arg0, arg1;
+
+            beforeEach( function() {
+                wrapperFactory = {
+                    create: function () {
+                        return ( ( target, args = [ ] ) => {
+                            // Test that the arguments are the correct types
+                            expect( typeof target ).to.equal( 'function' );
+                            expect( Array.isArray( args ) ).to.be.true();
+
+                            // `Exedore.next` is called inside of `Exedore.before`
+                            // so we do **NOT** need to worry about it here.
+                        } );
+                    }
+                };
+
+                wrapper = sinon.spy( wrapperFactory.create() );
+                arg0 = 'happy';
+                arg1 = 42;
+
+                Exedore.before( container, 'target', wrapper );
+            } );
+
+            it( 'causes a call to the target function to execute the advice before '
+                + 'executing the target', function () {
+                container.target( arg0, arg1 );
+                expect( wrapper ).to.have.been.calledBefore( deepSpy );
+            } );
+
+            it( 'provides the arguments to the advice', function() {
+                container.target( arg0, arg1 );
+                expect( wrapper ).to.have.been.calledOnce();
+                expect( wrapper ).to.have.been.calledWithExactly( sinon.match.func, [ arg0, arg1 ] );
+            } );
+
+            it( 'provides the arguments to the target function', function() {
+                container.target( arg0, arg1 );
+                expect( deepSpy ).to.have.been.calledOnce();
+                expect( deepSpy ).to.have.been.calledWithExactly( arg0, arg1 );
+            } );
+
+            it( 'can chain, with the most-recently added advice executing '
+                + 'first', function() {
+                let wrapper2 = sinon.spy( wrapperFactory.create() );
+                Exedore.before( container, 'target', wrapper2 );
+                expect( wrapper === wrapper2 ).to.be.false();
+
+                container.target( arg0, arg1 );
+                expect( wrapper2 ).to.have.been.calledOnce();
+                expect( wrapper ).to.have.been.calledOnce();
+                expect( deepSpy ).to.have.been.calledOnce();
+                expect( wrapper2 ).to.have.been.calledBefore( wrapper );
+            } );
+
+            it( 'causes a call to the target to return its normal value', function() {
+                let secret = Math.floor( Math.random() * 1000000 );
+                let returnValue = {
+                    type: 'secret',
+                    data: {
+                        name: 'setec astronomy',
+                        number: secret
+                    }
+                };
+                container.target = function() {
+                    return returnValue
+                };
+                deepSpy = sinon.spy( container, 'target' );
+
+                Exedore.before( container, 'target', wrapper );
+                let result = container.target();
+                expect( wrapper ).to.have.been.calledOnce();
+                expect( deepSpy ).to.have.been.calledOnce();
+                expect( result ).to.deep.equal( returnValue );
+            } );
+
+            it( 'executes the advice in the context of the target', function() {
+                let secret = Math.floor( Math.random() * 1000000 );
+                let returnValue = {
+                    type: 'secret',
+                    data: {
+                        name: 'setec astronomy',
+                        number: secret
+                    }
+                };
+
+                class CoolContainer {
+                    target() {
+                        expect( this === footainer ).to.be.true();
+                        return returnValue;
+                    }
+
+                    foo() {
+                        return 'bar';
+                    }
+
+                    add( a, b ) {
+                        return a + b;
+                    }
+                }
+
+                let footainer = new CoolContainer();
+                deepSpy = sinon.spy( footainer, 'target' );
+
+                let foowrap = sinon.spy( function( target, args ) {
+                    expect( this ).to.equal( footainer );
+                    expect( this === footainer ).to.be.true();
+                } );
+
+                Exedore.before( footainer, 'target', foowrap );
+                let result = footainer.target();
+                expect( foowrap ).to.have.been.calledOnce();
+                expect( deepSpy ).to.have.been.calledOnce();
+                expect( result ).to.deep.equal( returnValue );
+            } );
+
+        } );
+
+        context( '(when the advice has thrown an error)', function() {
+            let errorFactory, errorWrap, wrapper;
+
+            beforeEach( function() {
+                wrapperFactory = {
+                    create: function () {
+                        return ( ( target, args = [ ] ) => {
+                            // Test that the arguments are the correct types
+                            expect( typeof target ).to.equal( 'function' );
+                            expect( Array.isArray( args ) ).to.be.true();
+
+                            // `Exedore.next` is called inside of `Exedore.before`
+                            // so we do **NOT** need to worry about it here.
+                        } );
+                    }
+                };
+                wrapper = sinon.spy( wrapperFactory.create() );
+
+                errorFactory = {
+                    create: function () {
+                        return ( ( target, args = [ ] ) => {
+                            // Test that the arguments are the correct types
+                            expect( typeof target ).to.equal( 'function' );
+                            expect( Array.isArray( args ) ).to.be.true();
+
+                            throw new Error( 'Oops!' );
+                        } );
+                    }
+                };
+                errorWrap = sinon.spy( errorFactory.create() );
+
+                Exedore.before( container, 'target', wrapper );
+                Exedore.before( container, 'target', errorWrap );
+            } );
+
+            it( 'does not execute the next advice', function() {
+                expect( function() {
+                    container.target();
+                } ).to.throw( Error, 'Oops!' );
+
+                expect( errorWrap ).to.have.been.calledOnce();
+                expect( wrapper ).to.have.callCount( 0 );
+            } );
+
+            it( 'does not execute the target', function() {
+                expect( function() {
+                    container.target();
+                } ).to.throw( Error, 'Oops!' );
+
+                expect( errorWrap ).to.have.been.calledOnce();
+                expect( deepSpy ).to.have.callCount( 0 );
+            } );
+
+        } );
+
+    } );
+
+    describe( 'has a function `after( targetObject, functionName, advice )` that', function() {
+
+        context( '(when the target has completed normally)', function() {
+            let wrapper, arg0, arg1;
+
+            beforeEach( function() {
+                wrapperFactory = {
+                    create: function () {
+                        return ( ( target, args = [ ] ) => {
+                            // Test that the arguments are the correct types
+                            expect( typeof target ).to.equal( 'function' );
+                            expect( Array.isArray( args ) ).to.be.true();
+
+                            // `Exedore.next` is called inside of `Exedore.after`
+                            // so we do **NOT** need to worry about it here.
+                        } );
+                    }
+                };
+
+                wrapper = sinon.spy( wrapperFactory.create() );
+                arg0 = 'happy';
+                arg1 = 42;
+
+                Exedore.after( container, 'target', wrapper );
+            } );
+
+            it( 'executes after the target', function() {
+                container.target();
+
+                expect( wrapper ).to.have.been.calledOnce();
+                expect( deepSpy ).to.have.been.calledOnce();
+                expect( wrapper ).to.have.been.calledAfter( deepSpy );
+            } );
+
+            it( 'executes with the target\'s arguments', function() {
+                container.target( arg0, arg1 );
+
+                expect( wrapper ).to.have.been.calledWith( sinon.match.func, [ arg0, arg1 ] );
+            } );
+
+            it( 'executes in the context of the target', function() {
+                let secret = Math.floor( Math.random() * 1000000 );
+                let returnValue = {
+                    type: 'secret',
+                    data: {
+                        name: 'setec astronomy',
+                        number: secret
+                    }
+                };
+
+                class Context {
+                    target() {
+                        return returnValue;
+                    }
+                }
+                container = new Context();
+                deepSpy = sinon.spy( container, 'target' );
+            } );
+
+            it( 'returns the return value of the target', function() {
+                let secret = Math.floor( Math.random() * 1000000 );
+                let returnValue = {
+                    type: 'secret',
+                    data: {
+                        name: 'setec astronomy',
+                        number: secret
+                    }
+                };
+                container.target = function() {
+                    return returnValue
+                };
+                deepSpy = sinon.spy( container, 'target' );
+
+                Exedore.after( container, 'target', wrapper );
+                let result = container.target();
+                expect( wrapper ).to.have.been.calledOnce();
+                expect( deepSpy ).to.have.been.calledOnce();
+                expect( result ).to.deep.equal( returnValue );
+            } );
+
+            it( 'can chain, with the most-recently added advice executing '
+                + 'last', function() {
+                let wrapper2 = sinon.spy( wrapperFactory.create() );
+                Exedore.after( container, 'target', wrapper2 );
+                expect( wrapper === wrapper2 ).to.be.false();
+
+                container.target( arg0, arg1 );
+                expect( wrapper2 ).to.have.been.calledOnce();
+                expect( wrapper ).to.have.been.calledOnce();
+                expect( deepSpy ).to.have.been.calledOnce();
+                expect( wrapper ).to.have.been.calledBefore( wrapper2 );
+            } );
+
+        } );
+
+        context( '(when the target has thrown an error)', function() {
+
+            it( 'does not execute', function() {
+                container = {
+                    target: function() {
+                        throw new Error( 'Oops!' );
+                    }
+                };
+                deepSpy = sinon.spy( container, 'target' );
+                let wrapper = sinon.spy( function( target, args ) {
+                    // Test that the arguments are the correct types
+                    expect( typeof target ).to.equal( 'function' );
+                    expect( Array.isArray( args ) ).to.be.true();
+                } );
+
+                Exedore.after( container, 'target', wrapper );
+                expect( function() {
+                    container.target();
+                } ).to.throw( Error, 'Oops!' );
+                expect( wrapper ).to.have.callCount( 0 );
+            } );
+
+        } );
+
+
+    } );
+
 } );
