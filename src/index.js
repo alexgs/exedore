@@ -10,8 +10,8 @@ let Exedore = {
 
     before: function( targetObject, functionName, advice ) {
         this.wrap( targetObject, functionName, function( originalFunction, args ) {
-            advice.apply( {}, [ originalFunction, args ] );
-            return Exedore.next( {}, originalFunction, args );
+            advice.apply( targetObject, [ originalFunction, args ] );
+            return Exedore.next( targetObject, originalFunction, args );
         } );
     },
 
