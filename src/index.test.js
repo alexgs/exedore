@@ -627,4 +627,62 @@ describe( 'Exedore', function() {
 
     } );
 
+    describe( 'has a function `wrapClassMethod( targetClass, functionName, advice )` that', function() {
+
+        class Pair {
+            constructor( leftValue, rightValue ) {
+                this.left = leftValue;
+                this.right = rightValue;
+            }
+
+            add( a, b ) {
+                return a + b;
+            }
+
+            addToLeft( value ) {
+                this.left = this.add( this.left, value );
+                return this.left;
+            }
+
+            addToRight( value ) {
+                this.right = this.add( this.right, value );
+                return this.right;
+            }
+
+            sum() {
+                return this.add( this.left, this.right );
+            }
+        }
+
+        context( '(on the class prototype)', function() {
+
+            it( 'wraps the target function', function() {
+                let wrapper = function( targetFunction, args ) {
+                    return 99;
+                };
+                let ptr = Pair.prototype.addToLeft;
+                let pair1 = new Pair( 9, 2 );
+
+                Exedore.wrapClassMethod( Pair, 'addToLeft', wrapper );
+                expect( Pair.prototype.addToLeft === ptr ).to.be.false();
+
+                // Note that `Pair.prototype.addToLeft !== wrapper` because the
+                // advice is itself wrapped inside an anonymous function that
+                // is put on the prototype in place of the original function.
+            } );
+
+        } );
+
+        context( '(on an instance of the class)', function () {
+
+            it( 'causes a call to the target function to execute the advice' );
+
+            it( 'executes the advice in the context of the instance object' );
+            it( 'executes the target function in the context of the instance object' );
+
+        } );
+
+
+    } );
+
 } );
