@@ -643,14 +643,14 @@ describe( 'Exedore', function() {
                     return this.right;
                 }
 
-                checkContext() {
-                    expect( this ).to.equal( foo );
-                    expect( this === foo ).to.be.true();
+                checkContext( context ) {
+                    expect( this ).to.equal( context );
+                    expect( this === context ).to.be.true();
                     return this.sum();
                 }
 
                 sum() {
-                    return this.add( this.left, this.right );
+                    return Pair.add( this.left, this.right );
                 }
             };
 
@@ -661,7 +661,13 @@ describe( 'Exedore', function() {
                         return Exedore.next( this, targetFunction, args );
                     }
                 },
-                // TODO function checkContext
+                checkContext: function( context ) {
+                    return function ( targetFunction, args ) {
+                        expect( this ).to.equal( context );
+                        expect( this === context ).to.be.true();
+                        return Exedore.next( this, targetFunction, args );
+                    }
+                },
                 incrementFirstArg: function() {
                     return function ( targetFunction, args ) {
                         expect( args.length ).to.be.greaterThan( 0 );
@@ -705,19 +711,37 @@ describe( 'Exedore', function() {
 
             it( 'causes a call to the target function to execute the advice', function() {
                 let wrapper = sinon.spy( wrapperFactory.create() );
-                Exedore.wrapClassMethod( Pair, 'addToLeft', wrapper );
+                Exedore.wrapClassMethod( Pair, 'sum', wrapper );
 
-                let result = foo.addToLeft( increment );
+                let result = foo.sum();
                 expect( wrapper ).to.have.been.calledOnce();
             } );
 
+            it( 'causes a call to the target function to execute the original function', function() {
+                deepSpy = sinon.spy( Pair.prototype, 'sum' );
+                let wrapper = sinon.spy( wrapperFactory.create() );
+                Exedore.wrapClassMethod( Pair, 'sum', wrapper );
+
+                let result = foo.sum();
+                expect( wrapper ).to.have.been.calledOnce();
+                expect( deepSpy ).to.have.been.calledOnce();
+            } );
+
             it( 'returns the result of the target function', function() {
+                let wrapper = sinon.spy( wrapperFactory.create() );
+                Exedore.wrapClassMethod( Pair, 'sum', wrapper );
+                let result = foo.sum();
+                expect( result ).to.equal( left + right );
+            } );
+
+            it( 'allows the advice to pass the normal arguments to the target', function() {
                 // Sanity checks
                 expect( foo.left ).to.equal( left );
                 expect( Pair.add( foo.left, increment ) ).to.equal( left + increment );
                 expect( foo.addToLeft( increment ) ).to.equal( left + increment );
 
                 // Do the wrap
+                deepSpy = sinon.spy( Pair.prototype, 'addToLeft' );
                 let wrapper = sinon.spy( wrapperFactory.create() );
                 Exedore.wrapClassMethod( Pair, 'addToLeft', wrapper );
 
@@ -728,10 +752,31 @@ describe( 'Exedore', function() {
                 // Check the result
                 let result = foo.addToLeft( increment );
                 expect( result ).to.equal( left + increment );
+                expect( wrapper ).to.have.been.calledOnce();
+                expect( deepSpy ).to.have.been.calledOnce();
+                expect( deepSpy ).to.have.been.calledWithExactly( increment );
             } );
 
-            it( 'executes the advice in the context of the instance object' );
-            it( 'executes the target function in the context of the instance object' );
+            it( 'executes the advice in the context of the instance object', function() {
+                let wrapper = sinon.spy( wrapperFactory.checkContext( foo ) );
+                Exedore.wrapClassMethod( Pair, 'addToLeft', wrapper );
+                let result = foo.addToLeft( increment );
+                expect( result ).to.equal( left + increment );
+                expect( wrapper ).to.have.been.calledOnce();
+            } );
+
+            it( 'executes the target function in the context of the instance object', function() {
+                deepSpy = sinon.spy( Pair.prototype, 'checkContext' );
+                let wrapper = sinon.spy( wrapperFactory.create() );
+                Exedore.wrapClassMethod( Pair, 'checkContext', wrapper );
+
+                foo.checkContext( foo );
+                expect( wrapper ).to.have.been.calledOnce();
+                expect( deepSpy ).to.have.been.calledOnce();
+            } );
+
+            it( 'allows the advice to modify the argument(s) to the target function' );
+            it( 'allows the advice to modify the return value of the target function' );
 
         } );
 
