@@ -12,7 +12,6 @@ import sinon from 'sinon';
 import sinonChai from 'sinon-chai';
 
 import Exedore from './index';
-import TestClass from './module';
 
 chai.use( sinonChai );
 chai.use( dirtyChai );
@@ -213,12 +212,6 @@ describe( 'Exedore', function() {
             expect( adviceSpy ).to.have.been.calledOnce();
             expect( plusSpy ).to.have.been.calledTwice();
             expect( result ).to.equal( 5 );
-        } );
-
-        it( 'can *NOT* wrap a private function in a module', function() {
-            // This does not work; see line 24 in `module.js`
-            let test = new TestClass( 2, 2 );
-            expect( test.add() ).to.equal( 4 );
         } );
 
     } );
@@ -628,35 +621,66 @@ describe( 'Exedore', function() {
     } );
 
     describe( 'has a function `wrapClassMethod( targetClass, functionName, advice )` that', function() {
+        let Pair = null, foo = null, left = 99, right = 27, increment = 6;
 
-        class Pair {
-            constructor( leftValue, rightValue ) {
-                this.left = leftValue;
-                this.right = rightValue;
-            }
+        beforeEach( function () {
+            Pair = class Pair {
+                constructor( leftValue, rightValue ) {
+                    this.left = leftValue;
+                    this.right = rightValue;
+                }
 
-            add( a, b ) {
-                return a + b;
-            }
+                static add( a, b ) {
+                    return a + b;
+                }
 
-            addToLeft( value ) {
-                this.left = this.add( this.left, value );
-                return this.left;
-            }
+                addToLeft( value ) {
+                    return this.left + value;
+                }
 
-            addToRight( value ) {
-                this.right = this.add( this.right, value );
-                return this.right;
-            }
+                incrementRight( value ) {
+                    this.right = Pair.add( this.right, value );
+                    return this.right;
+                }
 
-            sum() {
-                return this.add( this.left, this.right );
-            }
-        }
+                checkContext() {
+                    expect( this ).to.equal( foo );
+                    expect( this === foo ).to.be.true();
+                    return this.sum();
+                }
+
+                sum() {
+                    return this.add( this.left, this.right );
+                }
+            };
+
+            wrapperFactory = {
+                create: function() {
+                    return function ( targetFunction, args ) {
+                        // Do something here
+                        return Exedore.next( this, targetFunction, args );
+                    }
+                },
+                // TODO function checkContext
+                incrementFirstArg: function() {
+                    return function ( targetFunction, args ) {
+                        expect( args.length ).to.be.greaterThan( 0 );
+                        args[0] = args[0] + increment;
+                        return Exedore.next( this, targetFunction, args );
+                    }
+                },
+                incrementReturn: function() {
+                    return function ( targetFunction, args ) {
+                        let returnValue = Exedore.next( this, targetFunction, args );
+                        return returnValue + increment;
+                    }
+                }
+            };
+        } );
 
         context( '(on the class prototype)', function() {
 
-            it( 'wraps the target function', function() {
+            it( 'replaces the target function', function() {
                 let wrapper = function( targetFunction, args ) {
                     return 99;
                 };
@@ -675,7 +699,36 @@ describe( 'Exedore', function() {
 
         context( '(on an instance of the class)', function () {
 
-            it( 'causes a call to the target function to execute the advice' );
+            beforeEach( function() {
+                foo = new Pair( left, right );
+            } );
+
+            it( 'causes a call to the target function to execute the advice', function() {
+                let wrapper = sinon.spy( wrapperFactory.create() );
+                Exedore.wrapClassMethod( Pair, 'addToLeft', wrapper );
+
+                let result = foo.addToLeft( increment );
+                expect( wrapper ).to.have.been.calledOnce();
+            } );
+
+            it( 'returns the result of the target function', function() {
+                // Sanity checks
+                expect( foo.left ).to.equal( left );
+                expect( Pair.add( foo.left, increment ) ).to.equal( left + increment );
+                expect( foo.addToLeft( increment ) ).to.equal( left + increment );
+
+                // Do the wrap
+                let wrapper = sinon.spy( wrapperFactory.create() );
+                Exedore.wrapClassMethod( Pair, 'addToLeft', wrapper );
+
+                // More sanity checks
+                expect( foo.left ).to.equal( left );
+                expect( Pair.add( left, increment ) ).to.equal( left + increment );
+
+                // Check the result
+                let result = foo.addToLeft( increment );
+                expect( result ).to.equal( left + increment );
+            } );
 
             it( 'executes the advice in the context of the instance object' );
             it( 'executes the target function in the context of the instance object' );
