@@ -775,8 +775,33 @@ describe( 'Exedore', function() {
                 expect( deepSpy ).to.have.been.calledOnce();
             } );
 
-            it( 'allows the advice to modify the argument(s) to the target function' );
-            it( 'allows the advice to modify the return value of the target function' );
+            it( 'allows the advice to modify the argument(s) to the target function', function() {
+                deepSpy = sinon.spy( Pair.prototype, 'addToLeft' );
+                let wrapper = wrapperFactory.incrementFirstArg();
+                Exedore.wrapClassMethod( Pair, 'addToLeft', wrapper );
+
+                // Remember, `increment` is added to the first argument in
+                // `incrementFirstArg`, so we check for (increment * 2) in
+                // these tests.
+                let result = foo.addToLeft( increment );
+                expect( deepSpy ).to.have.been.calledOnce();
+                expect( deepSpy ).to.have.been.calledWithExactly( increment * 2 );
+                expect( result ).to.equal( foo.left + ( increment * 2 ) );
+            } );
+
+            it( 'allows the advice to modify the return value of the target function', function() {
+                deepSpy = sinon.spy( Pair.prototype, 'addToLeft' );
+                let wrapper = wrapperFactory.incrementReturn();
+                Exedore.wrapClassMethod( Pair, 'addToLeft', wrapper );
+
+                // Remember, `increment` is added to the the result of the
+                // target function in `incrementReturn`, so we check for
+                // (increment * 2) in the result.
+                let result = foo.addToLeft( increment );
+                expect( deepSpy ).to.have.been.calledOnce();
+                expect( deepSpy ).to.have.been.calledWithExactly( increment );
+                expect( result ).to.equal( foo.left + ( increment * 2 ) );
+            } );
 
         } );
 
