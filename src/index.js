@@ -1,11 +1,23 @@
 
 let Exedore = {
-    after: function( targetObject, functionName, advice ) {
-        Exedore.wrap( targetObject, functionName, function( originalFunction, args ) {
+    after: function( targetObject, functionName, advice, classMethod = false ) {
+
+        function instanceCallback( originalFunction, args ) {
             let result = Exedore.next( targetObject, originalFunction, args );
             advice.apply( targetObject, [ originalFunction, args ] );
             return result;
-        } );
+        }
+
+        function classCallback( originalFunction, args ) {
+            let result = Exedore.next( this, originalFunction, args );
+            advice.apply( this, [ originalFunction, args ] );
+            return result;
+        }
+
+        let wrapFunc = classMethod ? Exedore.wrapClassMethod : Exedore.wrap;
+        let callback = classMethod ? classCallback : instanceCallback;
+
+        wrapFunc( targetObject, functionName, callback );
     },
 
     around: function( functionName, advice, targetObject ) {
@@ -16,19 +28,23 @@ let Exedore = {
         }
     },
 
-    before: function( targetObject, functionName, advice ) {
-        Exedore.wrap( targetObject, functionName, function( originalFunction, args ) {
+    before: function( targetObject, functionName, advice, classMethod = false ) {
+
+        function instanceCallback( originalFunction, args ) {
             advice.apply( targetObject, [ originalFunction, args ] );
             return Exedore.next( targetObject, originalFunction, args );
-        } );
-    },
+        }
 
-    // beforeClassMethod: function( targetConstructor, functionName, advice ) {
-    //     Exedore.wrap( targetConstructor.prototype, functionName, function( originalFunction, args ) {
-    //         advice.apply( this, [ originalFunction, args ] );
-    //         return Exedore.next( this, originalFunction, args );
-    //     } );
-    // },
+        function classCallback( originalFunction, args ) {
+            advice.apply( this, [ originalFunction, args ] );
+            return Exedore.next( this, originalFunction, args );
+        }
+
+        let wrapFunc = classMethod ? Exedore.wrapClassMethod : Exedore.wrap;
+        let callback = classMethod ? classCallback : instanceCallback;
+
+        wrapFunc( targetObject, functionName, callback );
+    },
 
     next: function( contextObject, functionRef, args = [ ] ) {
         return functionRef.apply( contextObject, args );

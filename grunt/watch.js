@@ -12,7 +12,7 @@ module.exports = {
     },
 
     tests: {
-        files: [ sourceDir + '**/*.test.js' ],
+        files: [ sourceDir + '**/*.js' ],
         options: {
             spawn: false
         },
