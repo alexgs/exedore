@@ -1,15 +1,40 @@
 module.exports = {
-    'build-and-test': {
-        description: 'Build the library and then run the tests',
-        tasks: [ 'babel', 'mocha' ]
+
+    'basic-build': {
+        description: 'Just build the library',
+        tasks: [ 'babel' ]
     },
 
-    default: [ 'babel' ],
+    build: {
+        description: 'Build the library and then run the tests',
+        tasks: [ 'basic-build', 'tests' ]
+    },
 
-    mocha: [ 'mochaTest' ],
+    default: [ 'basic-build' ],
 
-    test: {
+    dev: {
         description: 'Build, test, and watch for changes',
-        tasks: [ 'build-and-test', 'watch:mochaTests' ]
+        tasks: [ 'build', 'watch:tests' ]
+    },
+
+    'dev-examples': {
+        description: 'Build, run examples, and watch for changes',
+        tasks: [ 'examples', 'watch:examples' ]
+    },
+
+    examples: {
+        description: 'Build the library and run the examples',
+        tasks: [ 'basic-build', 'run-examples' ]
+    },
+
+    'run-examples': {
+        description: 'Just run the examples',
+        tasks: [ 'mochaTest:examples' ]
+    },
+
+    tests: {
+        description: 'Just run the tests',
+        tasks: [ 'mochaTest:tests' ]
     }
+
 };

@@ -12,7 +12,6 @@ import sinon from 'sinon';
 import sinonChai from 'sinon-chai';
 
 import Exedore from './index';
-import TestClass from './module';
 
 chai.use( sinonChai );
 chai.use( dirtyChai );
@@ -22,21 +21,97 @@ describe( 'Exedore', function() {
     let container
         , deepSpy
         , wrapperFactory
+        , Pair = null
+        , foo = null
+        , increment = 6
         ;
 
     beforeEach( function() {
         container = {
             target: function() { }
         };
+
         deepSpy = sinon.spy( container, 'target' );
+
+        Pair = class Pair {
+            constructor( leftValue, rightValue ) {
+                this.left = leftValue;
+                this.right = rightValue;
+            }
+
+            static add( a, b ) {
+                return a + b;
+            }
+
+            addToLeft( value ) {
+                return this.left + value;
+            }
+
+            incrementRight( value ) {
+                this.right = Pair.add( this.right, value );
+                return this.right;
+            }
+
+            checkContext( context ) {
+                expect( this ).to.equal( context );
+                expect( this === context ).to.be.true();
+                return this.sum();
+            }
+
+            sum() {
+                return Pair.add( this.left, this.right );
+            }
+        };
+
         wrapperFactory = {
             create: function () {
-                return ( ( target, args = [ ] ) => {
+                return function( targetFunction, args = [ ] ) {
                     // Test that the arguments are the correct types
-                    expect( typeof target ).to.equal( 'function' );
+                    expect( typeof targetFunction ).to.equal( 'function' );
                     expect( Array.isArray( args ) ).to.be.true();
-                    target.apply( this, args );
-                } );
+                    targetFunction.apply( this, args );
+                }
+            },
+            createBeforeAfter: function() {
+                return function( targetFunction, args ) {
+                    // Test that the arguments are the correct types
+                    expect( typeof targetFunction ).to.equal( 'function' );
+                    expect( Array.isArray( args ) ).to.be.true();
+
+                    // `Exedore.next` is called inside of `Exedore.before` and
+                    // `Exedore.after` so we do **NOT** need to worry about it here.
+                }
+            },
+            createError: function () {
+                return function( targetFunction, args = [ ] ) {
+                    throw new Error( 'Oops!' );
+                }
+            },
+            createWithNext: function() {
+                return function ( targetFunction, args ) {
+                    // Do something here
+                    return Exedore.next( this, targetFunction, args );
+                }
+            },
+            checkContext: function( context ) {
+                return function ( targetFunction, args ) {
+                    expect( this ).to.equal( context );
+                    expect( this === context ).to.be.true();
+                    return Exedore.next( this, targetFunction, args );
+                }
+            },
+            incrementFirstArg: function() {
+                return function ( targetFunction, args ) {
+                    expect( args.length ).to.be.greaterThan( 0 );
+                    args[0] = args[0] + increment;
+                    return Exedore.next( this, targetFunction, args );
+                }
+            },
+            incrementReturn: function() {
+                return function ( targetFunction, args ) {
+                    let returnValue = Exedore.next( this, targetFunction, args );
+                    return returnValue + increment;
+                }
             }
         };
     } );
@@ -215,12 +290,6 @@ describe( 'Exedore', function() {
             expect( result ).to.equal( 5 );
         } );
 
-        it( 'can *NOT* wrap a private function in a module', function() {
-            // This does not work; see line 24 in `module.js`
-            let test = new TestClass( 2, 2 );
-            expect( test.add() ).to.equal( 4 );
-        } );
-
     } );
 
     describe( 'has a function `next( context, function, args )` that', function() {
@@ -334,20 +403,7 @@ describe( 'Exedore', function() {
             let wrapper, arg0, arg1;
 
             beforeEach( function() {
-                wrapperFactory = {
-                    create: function () {
-                        return ( ( target, args = [ ] ) => {
-                            // Test that the arguments are the correct types
-                            expect( typeof target ).to.equal( 'function' );
-                            expect( Array.isArray( args ) ).to.be.true();
-
-                            // `Exedore.next` is called inside of `Exedore.before`
-                            // so we do **NOT** need to worry about it here.
-                        } );
-                    }
-                };
-
-                wrapper = sinon.spy( wrapperFactory.create() );
+                wrapper = sinon.spy( wrapperFactory.createBeforeAfter() );
                 arg0 = 'happy';
                 arg1 = 42;
 
@@ -374,7 +430,7 @@ describe( 'Exedore', function() {
 
             it( 'can chain, with the most-recently added advice executing '
                 + 'first', function() {
-                let wrapper2 = sinon.spy( wrapperFactory.create() );
+                let wrapper2 = sinon.spy( wrapperFactory.createBeforeAfter() );
                 Exedore.before( container, 'target', wrapper2 );
                 expect( wrapper === wrapper2 ).to.be.false();
 
@@ -449,35 +505,11 @@ describe( 'Exedore', function() {
         } );
 
         context( '(when the advice has thrown an error)', function() {
-            let errorFactory, errorWrap, wrapper;
+            let errorWrap, wrapper;
 
             beforeEach( function() {
-                wrapperFactory = {
-                    create: function () {
-                        return ( ( target, args = [ ] ) => {
-                            // Test that the arguments are the correct types
-                            expect( typeof target ).to.equal( 'function' );
-                            expect( Array.isArray( args ) ).to.be.true();
-
-                            // `Exedore.next` is called inside of `Exedore.before`
-                            // so we do **NOT** need to worry about it here.
-                        } );
-                    }
-                };
-                wrapper = sinon.spy( wrapperFactory.create() );
-
-                errorFactory = {
-                    create: function () {
-                        return ( ( target, args = [ ] ) => {
-                            // Test that the arguments are the correct types
-                            expect( typeof target ).to.equal( 'function' );
-                            expect( Array.isArray( args ) ).to.be.true();
-
-                            throw new Error( 'Oops!' );
-                        } );
-                    }
-                };
-                errorWrap = sinon.spy( errorFactory.create() );
+                wrapper = sinon.spy( wrapperFactory.createBeforeAfter() );
+                errorWrap = sinon.spy( wrapperFactory.createError() );
 
                 Exedore.before( container, 'target', wrapper );
                 Exedore.before( container, 'target', errorWrap );
@@ -503,6 +535,28 @@ describe( 'Exedore', function() {
 
         } );
 
+        it( 'accepts an optional parameter to work with the `wrapClassMethod` function', function() {
+            let ptr = Exedore.wrapClassMethod;
+            let exedoreSpy = sinon.spy( Exedore, 'wrapClassMethod' );
+            deepSpy = sinon.spy( Pair.prototype, 'addToLeft' );
+
+            let wrapper = sinon.spy( wrapperFactory.createBeforeAfter() );
+            Exedore.before( Pair, 'addToLeft', wrapper, true );
+
+            let left = 16, right = 27;
+            let foo = new Pair( left, right );
+            let result = foo.addToLeft( increment );
+
+            expect( wrapper ).to.have.been.calledOnce();
+            expect( deepSpy ).to.have.been.calledOnce();
+            expect( exedoreSpy ).to.have.been.calledOnce();
+            expect( result ).to.equal( left + increment );
+
+            // Restore the original function and verify
+            exedoreSpy.restore();
+            expect( ptr === Exedore.wrapClassMethod ).to.be.true();
+        } );
+
     } );
 
     describe( 'has a function `after( targetObject, functionName, advice )` that', function() {
@@ -511,20 +565,7 @@ describe( 'Exedore', function() {
             let wrapper, arg0, arg1;
 
             beforeEach( function() {
-                wrapperFactory = {
-                    create: function () {
-                        return ( ( target, args = [ ] ) => {
-                            // Test that the arguments are the correct types
-                            expect( typeof target ).to.equal( 'function' );
-                            expect( Array.isArray( args ) ).to.be.true();
-
-                            // `Exedore.next` is called inside of `Exedore.after`
-                            // so we do **NOT** need to worry about it here.
-                        } );
-                    }
-                };
-
-                wrapper = sinon.spy( wrapperFactory.create() );
+                wrapper = sinon.spy( wrapperFactory.createBeforeAfter() );
                 arg0 = 'happy';
                 arg1 = 42;
 
@@ -587,7 +628,7 @@ describe( 'Exedore', function() {
 
             it( 'can chain, with the most-recently added advice executing '
                 + 'last', function() {
-                let wrapper2 = sinon.spy( wrapperFactory.create() );
+                let wrapper2 = sinon.spy( wrapperFactory.createBeforeAfter() );
                 Exedore.after( container, 'target', wrapper2 );
                 expect( wrapper === wrapper2 ).to.be.false();
 
@@ -624,6 +665,153 @@ describe( 'Exedore', function() {
 
         } );
 
+        it( 'accepts an optional parameter to work with the `wrapClassMethod` function', function() {
+            let ptr = Exedore.wrapClassMethod;
+            let exedoreSpy = sinon.spy( Exedore, 'wrapClassMethod' );
+            deepSpy = sinon.spy( Pair.prototype, 'addToLeft' );
+
+            let wrapper = sinon.spy( wrapperFactory.createBeforeAfter() );
+            Exedore.after( Pair, 'addToLeft', wrapper, true );
+
+            let left = 16, right = 27;
+            let foo = new Pair( left, right );
+            let result = foo.addToLeft( increment );
+
+            expect( wrapper ).to.have.been.calledOnce();
+            expect( deepSpy ).to.have.been.calledOnce();
+            expect( exedoreSpy ).to.have.been.calledOnce();
+            expect( result ).to.equal( left + increment );
+
+            // Restore the original function and verify
+            exedoreSpy.restore();
+            expect( ptr === Exedore.wrapClassMethod ).to.be.true();
+        } );
+
+    } );
+
+    describe( 'has a function `wrapClassMethod( targetClass, functionName, advice )` that', function() {
+        let left = 99, right = 27;
+
+        context( '(on the class prototype)', function() {
+
+            it( 'replaces the target function', function() {
+                let wrapper = function( targetFunction, args ) {
+                    return 99;
+                };
+                let ptr = Pair.prototype.addToLeft;
+                let pair1 = new Pair( 9, 2 );
+
+                Exedore.wrapClassMethod( Pair, 'addToLeft', wrapper );
+                expect( Pair.prototype.addToLeft === ptr ).to.be.false();
+
+                // Note that `Pair.prototype.addToLeft !== wrapper` because the
+                // advice is itself wrapped inside an anonymous function that
+                // is put on the prototype in place of the original function.
+            } );
+
+        } );
+
+        context( '(on an instance of the class)', function () {
+
+            beforeEach( function() {
+                foo = new Pair( left, right );
+            } );
+
+            it( 'causes a call to the target function to execute the advice', function() {
+                let wrapper = sinon.spy( wrapperFactory.createWithNext() );
+                Exedore.wrapClassMethod( Pair, 'sum', wrapper );
+
+                let result = foo.sum();
+                expect( wrapper ).to.have.been.calledOnce();
+            } );
+
+            it( 'causes a call to the target function to execute the original function', function() {
+                deepSpy = sinon.spy( Pair.prototype, 'sum' );
+                let wrapper = sinon.spy( wrapperFactory.createWithNext() );
+                Exedore.wrapClassMethod( Pair, 'sum', wrapper );
+
+                let result = foo.sum();
+                expect( wrapper ).to.have.been.calledOnce();
+                expect( deepSpy ).to.have.been.calledOnce();
+            } );
+
+            it( 'returns the result of the target function', function() {
+                let wrapper = sinon.spy( wrapperFactory.createWithNext() );
+                Exedore.wrapClassMethod( Pair, 'sum', wrapper );
+                let result = foo.sum();
+                expect( result ).to.equal( left + right );
+            } );
+
+            it( 'allows the advice to pass the normal arguments to the target', function() {
+                // Sanity checks
+                expect( foo.left ).to.equal( left );
+                expect( Pair.add( foo.left, increment ) ).to.equal( left + increment );
+                expect( foo.addToLeft( increment ) ).to.equal( left + increment );
+
+                // Do the wrap
+                deepSpy = sinon.spy( Pair.prototype, 'addToLeft' );
+                let wrapper = sinon.spy( wrapperFactory.createWithNext() );
+                Exedore.wrapClassMethod( Pair, 'addToLeft', wrapper );
+
+                // More sanity checks
+                expect( foo.left ).to.equal( left );
+                expect( Pair.add( left, increment ) ).to.equal( left + increment );
+
+                // Check the result
+                let result = foo.addToLeft( increment );
+                expect( result ).to.equal( left + increment );
+                expect( wrapper ).to.have.been.calledOnce();
+                expect( deepSpy ).to.have.been.calledOnce();
+                expect( deepSpy ).to.have.been.calledWithExactly( increment );
+            } );
+
+            it( 'executes the advice in the context of the instance object', function() {
+                let wrapper = sinon.spy( wrapperFactory.checkContext( foo ) );
+                Exedore.wrapClassMethod( Pair, 'addToLeft', wrapper );
+                let result = foo.addToLeft( increment );
+                expect( result ).to.equal( left + increment );
+                expect( wrapper ).to.have.been.calledOnce();
+            } );
+
+            it( 'executes the target function in the context of the instance object', function() {
+                deepSpy = sinon.spy( Pair.prototype, 'checkContext' );
+                let wrapper = sinon.spy( wrapperFactory.createWithNext() );
+                Exedore.wrapClassMethod( Pair, 'checkContext', wrapper );
+
+                foo.checkContext( foo );
+                expect( wrapper ).to.have.been.calledOnce();
+                expect( deepSpy ).to.have.been.calledOnce();
+            } );
+
+            it( 'allows the advice to modify the argument(s) to the target function', function() {
+                deepSpy = sinon.spy( Pair.prototype, 'addToLeft' );
+                let wrapper = wrapperFactory.incrementFirstArg();
+                Exedore.wrapClassMethod( Pair, 'addToLeft', wrapper );
+
+                // Remember, `increment` is added to the first argument in
+                // `incrementFirstArg`, so we check for (increment * 2) in
+                // these tests.
+                let result = foo.addToLeft( increment );
+                expect( deepSpy ).to.have.been.calledOnce();
+                expect( deepSpy ).to.have.been.calledWithExactly( increment * 2 );
+                expect( result ).to.equal( foo.left + ( increment * 2 ) );
+            } );
+
+            it( 'allows the advice to modify the return value of the target function', function() {
+                deepSpy = sinon.spy( Pair.prototype, 'addToLeft' );
+                let wrapper = wrapperFactory.incrementReturn();
+                Exedore.wrapClassMethod( Pair, 'addToLeft', wrapper );
+
+                // Remember, `increment` is added to the the result of the
+                // target function in `incrementReturn`, so we check for
+                // (increment * 2) in the result.
+                let result = foo.addToLeft( increment );
+                expect( deepSpy ).to.have.been.calledOnce();
+                expect( deepSpy ).to.have.been.calledWithExactly( increment );
+                expect( result ).to.equal( foo.left + ( increment * 2 ) );
+            } );
+
+        } );
 
     } );
 
