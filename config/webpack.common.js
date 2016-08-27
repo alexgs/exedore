@@ -1,3 +1,4 @@
+var path = require( 'path' );
 var webpack = require( 'webpack' );
 
 module.exports = {
@@ -42,6 +43,8 @@ module.exports = {
                         'transform-es2015-typeof-symbol',
                         'transform-es2015-unicode-regex',
                         'transform-regenerator'
+                    // ].map( plugin => path.resolve( './node_modules', 'babel-preset-es2015', 'node_modules', plugin ) )
+                    // ].map( plugin => './node_modules/babel-preset-es2015/node_modules/' + plugin )
                     ]
                 }
             }
