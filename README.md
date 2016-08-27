@@ -29,6 +29,5 @@ This is because arrow functions lexically bind the value of `this` to the contac
 
 ## (Possible) Future Directions
 
-- Implement `before` and `after` methods, as in [Aop.js][1]
 - Update `before` method to accept a function argument that modifies the arguments to the original function
 - Update `after` method to accept a function argument that modifies the return value from the original function
