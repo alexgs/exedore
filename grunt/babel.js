@@ -1,7 +1,8 @@
 module.exports = {
     options: {
         sourceMap: true,
-        // presets: [ 'es2015' ]
+        // These plugins comprise the "es2015" present and can be selectively
+        // disabled for evergreen browsers and environments
         plugins: [
             'check-es2015-constants',
             'transform-es2015-arrow-functions',
