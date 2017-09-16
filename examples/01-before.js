@@ -8,21 +8,14 @@ const math = {
     multiply: function( a, b ) { return a * b; }
 };
 
-let logger = function( target, args ) {
+const loggerBefore = function( target, args ) {
     const beforeMessage = `Function '${target.name}' called with ${args.toString()}`;
     log.push( beforeMessage );
-
-    const result = Exedore.next( this, target, args );
-
-    const afterMessage = `Function '${target.name}' returned ${result}`;
-    log.push( afterMessage );
-
-    return result;
 };
 
 // MAIN
-Exedore.wrap( math, 'add', logger );
-Exedore.wrap( math, 'multiply', logger );
+Exedore.before( math, 'add', loggerBefore );
+Exedore.before( math, 'multiply', loggerBefore );
 
 math.multiply( 3, 9 );
 math.add( 1, 1 );
