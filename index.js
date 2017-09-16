@@ -1,4 +1,4 @@
 'use strict';
 
-var Exedore = require( './lib/index' );
-exports.default = Exedore;
+const Exedore = require( './dist/index' );
+module.exports = Exedore;
