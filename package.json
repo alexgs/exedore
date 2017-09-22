@@ -4,10 +4,14 @@
   "description": "Library for aspect-oriented programming",
   "repository": {
     "type": "git",
-    "url": "https://github.com/philgs/exedore"
+    "url": "https://github.com/philgs/exedore.git"
   },
   "main": "index.js",
-  "author": "Phil Gates-Shannon <phil.gs@gmail.com>",
+  "author": {
+    "name": "Phil Gates-Shannon",
+    "email": "phil.gs@gmail.com",
+    "url": "http://philgs.me"
+  },
   "license": "MIT",
   "scripts": {
     "test": "node ./scripts/spawn mocha",
@@ -17,6 +21,7 @@
     "node": ">=6.11.3"
   },
   "devDependencies": {
+    "@types/chai": "^4.0.4",
     "babel-cli": "^6.8.0",
     "babel-plugin-syntax-trailing-function-commas": "^6.22.0",
     "babel-plugin-transform-async-to-generator": "^6.24.1",
@@ -29,6 +34,7 @@
     "lodash": "^4.17.4",
     "mocha": "^3.5.3",
     "sinon": "^3.2.1",
-    "sinon-chai": "^2.8.0"
+    "sinon-chai": "^2.8.0",
+    "types-dirty-chai": "git+https://github.com/philgs/types-dirty-chai.git#67e1a89610"
   }
 }
