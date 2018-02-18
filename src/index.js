@@ -4,13 +4,13 @@ let Exedore = {
 
         function instanceCallback( originalFunction, args ) {
             let result = Exedore.next( targetObject, originalFunction, args );
-            advice.apply( targetObject, [ originalFunction, args ] );
+            advice.apply( targetObject, [ originalFunction, args, result ] );
             return result;
         }
 
         function classCallback( originalFunction, args ) {
             let result = Exedore.next( this, originalFunction, args );
-            advice.apply( this, [ originalFunction, args ] );
+            advice.apply( this, [ originalFunction, args, result ] );
             return result;
         }
 

@@ -24,11 +24,12 @@ describe( 'Exedore', function() {
         , Pair = null
         , foo = null
         , increment = 6
+        , targetResult = 27
         ;
 
     beforeEach( function() {
         container = {
-            target: function() { }
+            target: function() { return targetResult; }
         };
 
         deepSpy = sinon.spy( container, 'target' );
@@ -72,7 +73,18 @@ describe( 'Exedore', function() {
                     targetFunction.apply( this, args );
                 }
             },
-            createBeforeAfter: function() {
+            createAfter: function() {
+                return function( targetFunction, args, result ) {
+                    // Test that the arguments are the correct types
+                    expect( typeof targetFunction ).to.equal( 'function' );
+                    expect( Array.isArray( args ) ).to.be.true();
+                    expect( result !== undefined || result !== null ).to.be.true();
+
+                    // `Exedore.next` is called inside of `Exedore.before` and
+                    // `Exedore.after` so we do **NOT** need to worry about it here.
+                }
+            },
+            createBefore: function() {
                 return function( targetFunction, args ) {
                     // Test that the arguments are the correct types
                     expect( typeof targetFunction ).to.equal( 'function' );
@@ -366,44 +378,13 @@ describe( 'Exedore', function() {
 
     } );
 
-    describe( 'usage examples:', function() {
-
-        context( 'logging', function() {
-            let log = [ ];
-            let t1 = {
-                add( a, b ) { return a + b; },
-                multiply( a, b ) { return a * b; }
-            };
-
-            let logger = function( target, args ) {
-                let message = `Function ${target.name} called with ${args.toString()}`;
-                // console.log( message );
-                log.push( message );
-                return Exedore.next( this, target, args );
-            };
-
-            it( 'with `wrap`', function() {
-                Exedore.wrap( t1, 'add', logger );
-
-                expect( t1.add( 1, 1 ) ).to.equal( 2 );
-                expect( t1.add( 2, 2 ) ).to.equal( 4 );
-                expect( log.length ).to.equal( 2 );
-                expect( log[0] ).to.equal( 'Function add called with 1,1' );
-                expect( log[1] ).to.equal( 'Function add called with 2,2' );
-
-            } );
-
-        } );
-
-    } );
-
     describe( 'has a function `before( targetObject, functionName, advice )` that', function() {
 
         context( '(when the advice has completed normally)', function() {
             let wrapper, arg0, arg1;
 
             beforeEach( function() {
-                wrapper = sinon.spy( wrapperFactory.createBeforeAfter() );
+                wrapper = sinon.spy( wrapperFactory.createBefore() );
                 arg0 = 'happy';
                 arg1 = 42;
 
@@ -430,7 +411,7 @@ describe( 'Exedore', function() {
 
             it( 'can chain, with the most-recently added advice executing '
                 + 'first', function() {
-                let wrapper2 = sinon.spy( wrapperFactory.createBeforeAfter() );
+                let wrapper2 = sinon.spy( wrapperFactory.createBefore() );
                 Exedore.before( container, 'target', wrapper2 );
                 expect( wrapper === wrapper2 ).to.be.false();
 
@@ -508,7 +489,7 @@ describe( 'Exedore', function() {
             let errorWrap, wrapper;
 
             beforeEach( function() {
-                wrapper = sinon.spy( wrapperFactory.createBeforeAfter() );
+                wrapper = sinon.spy( wrapperFactory.createBefore() );
                 errorWrap = sinon.spy( wrapperFactory.createError() );
 
                 Exedore.before( container, 'target', wrapper );
@@ -540,7 +521,7 @@ describe( 'Exedore', function() {
             let exedoreSpy = sinon.spy( Exedore, 'wrapClassMethod' );
             deepSpy = sinon.spy( Pair.prototype, 'addToLeft' );
 
-            let wrapper = sinon.spy( wrapperFactory.createBeforeAfter() );
+            let wrapper = sinon.spy( wrapperFactory.createBefore() );
             Exedore.before( Pair, 'addToLeft', wrapper, true );
 
             let left = 16, right = 27;
@@ -565,7 +546,7 @@ describe( 'Exedore', function() {
             let wrapper, arg0, arg1;
 
             beforeEach( function() {
-                wrapper = sinon.spy( wrapperFactory.createBeforeAfter() );
+                wrapper = sinon.spy( wrapperFactory.createAfter() );
                 arg0 = 'happy';
                 arg1 = 42;
 
@@ -580,10 +561,10 @@ describe( 'Exedore', function() {
                 expect( wrapper ).to.have.been.calledAfter( deepSpy );
             } );
 
-            it( 'executes with the target\'s arguments', function() {
+            it( 'executes with the target\'s arguments and result', function() {
                 container.target( arg0, arg1 );
 
-                expect( wrapper ).to.have.been.calledWith( sinon.match.func, [ arg0, arg1 ] );
+                expect( wrapper ).to.have.been.calledWith( sinon.match.func, [ arg0, arg1 ], targetResult );
             } );
 
             it( 'executes in the context of the target', function() {
@@ -626,9 +607,8 @@ describe( 'Exedore', function() {
                 expect( result ).to.deep.equal( returnValue );
             } );
 
-            it( 'can chain, with the most-recently added advice executing '
-                + 'last', function() {
-                let wrapper2 = sinon.spy( wrapperFactory.createBeforeAfter() );
+            it( 'can chain, with the most-recently added advice executing last', function() {
+                let wrapper2 = sinon.spy( wrapperFactory.createAfter() );
                 Exedore.after( container, 'target', wrapper2 );
                 expect( wrapper === wrapper2 ).to.be.false();
 
@@ -670,7 +650,7 @@ describe( 'Exedore', function() {
             let exedoreSpy = sinon.spy( Exedore, 'wrapClassMethod' );
             deepSpy = sinon.spy( Pair.prototype, 'addToLeft' );
 
-            let wrapper = sinon.spy( wrapperFactory.createBeforeAfter() );
+            let wrapper = sinon.spy( wrapperFactory.createAfter() );
             Exedore.after( Pair, 'addToLeft', wrapper, true );
 
             let left = 16, right = 27;

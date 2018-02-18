@@ -14,8 +14,12 @@
   },
   "license": "MIT",
   "scripts": {
-    "test": "node ./scripts/spawn mocha",
-    "build": "babel src -d dist"
+    "build": "babel src -d dist",
+    "example:01": "babel-node ./examples/01-before.js",
+    "example:02": "babel-node ./examples/02-after.js",
+    "example:03": "babel-node ./examples/03-before-and-after.js",
+    "example:04": "babel-node ./examples/04-wrapping-function-calls.js",
+    "test": "node ./scripts/spawn mocha"
   },
   "engines": {
     "node": ">=6.11.3"

@@ -1,0 +1,3 @@
+<component name="DependencyValidationManager">
+  <scope name="All Tests" pattern="file[exedore]:src//*.test.js||file[exedore]:src//*examples.js" />
+</component>
