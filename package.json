@@ -1,28 +1,64 @@
 {
   "name": "exedore",
-  "version": "1.0.0-pre1",
+  "version": "1.0.0",
   "description": "Library for aspect-oriented programming",
+  "keywords": [
+    "aop",
+    "aspect",
+    "aspect oriented programming"
+  ],
+  "main": "index.js",
+  "author": {
+    "name": "Phil Gates-Shannon",
+    "email": "phil.gs@gmail.com",
+    "url": "http://philgs.me"
+  },
   "repository": {
     "type": "git",
-    "url": "https://github.com/philgs/exedore"
+    "url": "https://github.com/philgs/exedore.git"
   },
-  "main": "index.js",
-  "author": "Phil Gates-Shannon <phil.gs@gmail.com>",
   "license": "MIT",
+  "engines": {
+    "node": ">=6.12.0"
+  },
+  "scripts": {
+    "prepublishOnly": "npm run build",
+    "test": "npm run build && mocha",
+    "build": "babel src -d dist",
+    "example:01": "babel-node ./examples/01-before.js",
+    "example:02": "babel-node ./examples/02-after.js",
+    "example:03": "babel-node ./examples/03-before-and-after.js",
+    "example:04": "babel-node ./examples/04-wrapping-function-calls.js"
+  },
+  "babel": {
+    "presets": [
+      [
+        "env",
+        {
+          "targets": {
+            "node": "6.12.0"
+          }
+        }
+      ],
+      "stage-3"
+    ],
+    "plugins": [
+      "transform-class-properties"
+    ]
+  },
   "devDependencies": {
-    "babel-cli": "^6.8.0",
-    "babel-core": "^6.8.0",
-    "babel-preset-es2015": "^6.6.0",
-    "chai": "^3.5.0",
-    "dirty-chai": "^1.2.2",
-    "grunt": "^1.0.1",
-    "grunt-babel": "^6.0.0",
-    "grunt-contrib-watch": "^1.0.0",
-    "grunt-mocha-test": "^0.12.7",
-    "load-grunt-config": "^0.19.2",
-    "load-grunt-tasks": "^3.5.0",
-    "mocha": "^2.4.5",
-    "sinon": "^1.17.4",
-    "sinon-chai": "^2.8.0"
+    "@types/chai": "^4.0.4",
+    "babel-cli": "^6.26.0",
+    "babel-plugin-transform-class-properties": "^6.24.1",
+    "babel-preset-env": "^1.6.1",
+    "babel-preset-stage-3": "^6.24.1",
+    "babel-register": "^6.26.0",
+    "chai": "^4.1.2",
+    "dirty-chai": "^2.0.1",
+    "lodash": "^4.17.4",
+    "mocha": "^5.0.1",
+    "sinon": "^4.3.0",
+    "sinon-chai": "^2.8.0",
+    "types-dirty-chai": "git+https://github.com/philgs/types-dirty-chai.git#67e1a89610"
   }
 }
