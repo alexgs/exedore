@@ -11,7 +11,7 @@ import dirtyChai from 'dirty-chai';
 import sinon from 'sinon';
 import sinonChai from 'sinon-chai';
 
-import Exedore from '../src/index';
+import Exedore from '../index';
 
 chai.use( sinonChai );
 chai.use( dirtyChai );
