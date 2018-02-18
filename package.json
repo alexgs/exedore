@@ -1,43 +1,63 @@
 {
   "name": "exedore",
-  "version": "1.0.0-pre1",
+  "version": "1.0.0",
   "description": "Library for aspect-oriented programming",
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/philgs/exedore.git"
-  },
+  "keywords": [
+    "aop",
+    "aspect",
+    "aspect oriented programming"
+  ],
   "main": "index.js",
   "author": {
     "name": "Phil Gates-Shannon",
     "email": "phil.gs@gmail.com",
     "url": "http://philgs.me"
   },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/philgs/exedore.git"
+  },
   "license": "MIT",
+  "engines": {
+    "node": ">=6.12.0"
+  },
   "scripts": {
+    "prepublishOnly": "npm run build",
+    "test": "npm run build && mocha",
     "build": "babel src -d dist",
     "example:01": "babel-node ./examples/01-before.js",
     "example:02": "babel-node ./examples/02-after.js",
     "example:03": "babel-node ./examples/03-before-and-after.js",
-    "example:04": "babel-node ./examples/04-wrapping-function-calls.js",
-    "test": "node ./scripts/spawn mocha"
+    "example:04": "babel-node ./examples/04-wrapping-function-calls.js"
   },
-  "engines": {
-    "node": ">=6.11.3"
+  "babel": {
+    "presets": [
+      [
+        "env",
+        {
+          "targets": {
+            "node": "6.12.0"
+          }
+        }
+      ],
+      "stage-3"
+    ],
+    "plugins": [
+      "transform-class-properties"
+    ]
   },
   "devDependencies": {
     "@types/chai": "^4.0.4",
-    "babel-cli": "^6.8.0",
-    "babel-plugin-syntax-trailing-function-commas": "^6.22.0",
-    "babel-plugin-transform-async-to-generator": "^6.24.1",
-    "babel-plugin-transform-es2015-modules-commonjs": "^6.24.1",
-    "babel-plugin-transform-exponentiation-operator": "^6.24.1",
+    "babel-cli": "^6.26.0",
+    "babel-plugin-transform-class-properties": "^6.24.1",
+    "babel-preset-env": "^1.6.1",
     "babel-preset-stage-3": "^6.24.1",
-    "babel-register": "^6.24.1",
+    "babel-register": "^6.26.0",
     "chai": "^4.1.2",
     "dirty-chai": "^2.0.1",
     "lodash": "^4.17.4",
-    "mocha": "^3.5.3",
-    "sinon": "^3.2.1",
+    "mocha": "^5.0.1",
+    "sinon": "^4.3.0",
     "sinon-chai": "^2.8.0",
     "types-dirty-chai": "git+https://github.com/philgs/types-dirty-chai.git#67e1a89610"
   }
